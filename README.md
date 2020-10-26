@@ -1,1 +1,3 @@
-# reorder-cnn-compression
+# Tensor Reordering for CNN Compression
+
+We show how parameter redundancy in Convolutional Neural Network (CNN) filters can be effectively reduced by pruning in spectral domain. Specifically, the representation extracted via Discrete Cosine Transform (DCT) is more conducive for pruning than the original space. By relying on a combination of weight tensor reshaping and reordering we achieve high levels of layer compression with just minor accuracy loss.  Our approach is applied to compress pretrained CNNs and we show that minor additional fine-tuning allows our method to recover the original model performance after a significant parameter reduction. We validate our approach on ResNet-50 and MobileNet-V2 architectures for ImageNet classification task.
