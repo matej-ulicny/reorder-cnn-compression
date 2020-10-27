@@ -1,3 +1,9 @@
+"""
+    Training code.
+    Written by Matej Ulicny.
+    Based on PyTorch ImageNet example training script:
+    https://github.com/pytorch/examples/tree/master/imagenet
+"""
 import argparse
 import os
 import random
@@ -20,7 +26,7 @@ modes = ['uniform', 'progressive']
 parser = argparse.ArgumentParser(description='PyTorch ImageNet Training')
 parser.add_argument('data', metavar='DIR',
                     help='path to dataset')
-parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet18',
+parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50',
                     choices=model_names,
                     help='model architecture: ' +
                         ' | '.join(model_names) +
@@ -53,7 +59,7 @@ parser.add_argument('--seed', default=None, type=int,
                     help='seed for initializing training. ')
 parser.add_argument('--gpu', default=None, type=int,
                     help='GPU id to use.')
-parser.add_argument('--mode', default='uniform', choices=modes, help='compression mode: '+' | '.join(modes)+' (default: uniform)')
+parser.add_argument('--progressive', action='store_true', help='compression mode: '+' | '.join(modes)+' (default: uniform)')
 parser.add_argument('-g', '--groups', default=4, type=int)
 parser.add_argument('-r', '--compression-rate', default=2.0, type=float)
 
@@ -91,8 +97,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
     # create model
     print("=> creating model '{}'".format(args.arch))
-    model = resnet.resnet50(g=args.g, r=args.r, progressive=args.mode==modes[1]) if args.arch == 'resnet50' else mobilenet.mobilenet_v2(g=args.g, r=args.r, progressive=args.mode==modes[1])
-    
+    model = resnet.resnet50(g=args.groups, r=args.compression_rate, progressive=args.progressive) if args.arch == 'resnet50' else \
+                            mobilenet.mobilenet_v2(g=args.groups, r=args.compression_rate, progressive=args.progressive)
+
     if args.gpu is not None:
         torch.cuda.set_device(args.gpu)
         model = model.cuda(args.gpu)
@@ -116,20 +123,19 @@ def main_worker(gpu, ngpus_per_node, args):
         if os.path.isfile(args.resume):
             print("=> loading checkpoint '{}'".format(args.resume))
             checkpoint = torch.load(args.resume)
-			if 'epoch' in checkpoint.keys():
+            if 'epoch' in checkpoint.keys():
                 args.start_epoch = checkpoint['epoch']
-           
-		    if 'state_dict' in checkpoint.keys():
-                state_dict = model.state_dict()
-                loaded_dict = {k: v for k, v in checkpoint['state_dict'].items() if k in state_dict}
-                state_dict.update(loaded_dict)
-                model.load_state_dict(state_dict)
-			else:
-			    model.load_state_dict(checkpoint) # loading compressed model
-			if 'optimizer' in checkpoint.keys():
+            chck_state_dict = checkpoint['state_dict'] if 'state_dict' in checkpoint.keys() else checkpoint
+            model_state_dict = model.state_dict()
+            loaded_dict = {k: v for k, v in chck_state_dict.items() if k in model_state_dict}
+            if not bool(loaded_dict): # empty dictionary if model was trained in parallel
+                loaded_dict = {'module.'+k: v for k, v in chck_state_dict.items() if 'module.'+k in model_state_dict}
+            model_state_dict.update(loaded_dict)
+            model.load_state_dict(model_state_dict)
+            if 'optimizer' in checkpoint.keys():
                 optimizer.load_state_dict(checkpoint['optimizer'])
             print("=> loaded checkpoint '{}' (epoch {})"
-                  .format(args.resume, checkpoint['epoch']))
+                  .format(args.resume, args.start_epoch))
         else:
             print("=> no checkpoint found at '{}'".format(args.resume))
 
@@ -184,7 +190,7 @@ def main_worker(gpu, ngpus_per_node, args):
             'arch': args.arch,
             'state_dict': model.state_dict(),
             'optimizer' : optimizer.state_dict(),
-        }, name=args.arch, g=args.g, r=args.r, mode=args.mode)
+        }, name=args.arch, g=args.groups, r=args.compression_rate, mode=args.progressive)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args):
@@ -281,8 +287,8 @@ def validate(val_loader, model, criterion, args):
     return top1.avg
 
 
-def save_checkpoint(state, name, g=4, r=2, mode='uniform'):
-    filename = 'checkpoint-'+name+'-'+mode+'-'+str(g)+'-'+str(r)+'.pth'
+def save_checkpoint(state, name, g=4, r=2, progressive=False):
+    filename = 'checkpoint-'+name+'-'+modes[int(progressive)]+'-'+str(g)+'-'+str(r)+'.pth'
     torch.save(state, filename)
 
 

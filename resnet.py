@@ -1,9 +1,14 @@
+"""
+    Compressed ResNet.
+    Written by Matej Ulicny.
+    Based on Torchvision definition:
+    https://github.com/pytorch/vision/tree/master/torchvision/models
+"""
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 import numpy as np
 import torch
 import torch.nn.functional as F
-import torch_dct as dct
 from modules import CompConv, CompLinear
 
 __all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101',

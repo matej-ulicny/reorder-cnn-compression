@@ -1,8 +1,13 @@
+"""
+    Compressed MobileNet.
+    Written by Matej Ulicny.
+    Based on Torchvision definition:
+    https://github.com/pytorch/vision/tree/master/torchvision/models
+"""
 import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.utils import model_zoo
-import torch_dct as dct
 from modules import CompConv, CompLinear
 
 __all__ = ['MobileNetV2', 'mobilenet_v2']
@@ -38,8 +43,8 @@ class ConvBNReLU(nn.Sequential):
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         super(ConvBNReLU, self).__init__(
-            CompConv(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False, g=g, r=r, progressive=progressive) if comp 
-			    else nn.Conv2d(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False),
+            CompConv(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False, g=g, r=r, progressive=progressive, ref_size=(384*64)**0.5) if comp
+                else nn.Conv2d(in_planes, out_planes, kernel_size, stride, padding, groups=groups, bias=False),
             norm_layer(out_planes),
             nn.ReLU6(inplace=True)
         )
@@ -65,7 +70,7 @@ class InvertedResidual(nn.Module):
             # dw
             ConvBNReLU(hidden_dim, hidden_dim, stride=stride, groups=hidden_dim, norm_layer=norm_layer, comp=False),
             # pw-linear
-            CompConv(hidden_dim, oup, 1, 1, 0, bias=False, g=g, r=r, progressive=progressive) if comp else nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
+            CompConv(hidden_dim, oup, 1, 1, 0, bias=False, g=g, r=r, progressive=progressive, ref_size=(384*64)**0.5) if comp else nn.Conv2d(hidden_dim, oup, 1, 1, 0, bias=False),
             norm_layer(oup),
         ])
         self.conv = nn.Sequential(*layers)
@@ -85,9 +90,9 @@ class MobileNetV2(nn.Module):
                  round_nearest=8,
                  block=None,
                  norm_layer=None,
-				 g=g,
-				 r=r,
-				 progressive=progressive):
+                 g=4,
+                 r=2.0,
+                 progressive=False):
         """
         MobileNet V2 main class
 
@@ -138,17 +143,17 @@ class MobileNetV2(nn.Module):
             output_channel = _make_divisible(c * width_mult, round_nearest)
             for i in range(n):
                 stride = s if i == 0 else 1
-                features.append(block(input_channel, output_channel, stride, expand_ratio=t, norm_layer=norm_layer, comp=len(features)>7), g=g, r=r, progressive=progressive)
+                features.append(block(input_channel, output_channel, stride, expand_ratio=t, norm_layer=norm_layer, comp=len(features)>7, g=g, r=r, progressive=progressive))
                 input_channel = output_channel
         # building last several layers
-        features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1, norm_layer=norm_layer))
+        features.append(ConvBNReLU(input_channel, self.last_channel, kernel_size=1, norm_layer=norm_layer, comp=True, g=g, r=r, progressive=progressive))
         # make it nn.Sequential
         self.features = nn.Sequential(*features)
 
         # building classifier
         self.classifier = nn.Sequential(
             nn.Dropout(0.2),
-            CompLinear(self.last_channel, num_classes, g=g, r=r, progressive=progressive),
+            CompLinear(self.last_channel, num_classes, g=g, r=r, progressive=progressive, ref_size=(384*64)**0.5),
         )
 
         # weight initialization

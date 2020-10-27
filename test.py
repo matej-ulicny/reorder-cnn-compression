@@ -1,5 +1,12 @@
+"""
+    Testing code.
+    Written by Matej Ulicny.
+    Based on PyTorch ImageNet example training script:
+    https://github.com/pytorch/examples/tree/master/imagenet
+"""
 import argparse
 import os
+import time
 import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
@@ -84,24 +91,33 @@ def accuracy(output, target, topk=(1,)):
 
 model_names = ['resnet50', 'mobilenet_v2']
 modes = ['uniform', 'progressive']
-	
+
 parser = argparse.ArgumentParser(description='Testing script')
-parser.add_argument('data-path', type=str, metavar='PATH', help='path to ImageNet')
+parser.add_argument('data', type=str, metavar='PATH', help='path to ImageNet')
 parser.add_argument('checkpoint', type=str, metavar='PATH', help='name of the model file')
 parser.add_argument('-a', '--arch', metavar='ARCH', default='resnet50', choices=model_names, help='model architecture: '+' | '.join(model_names)+' (default: resnet50)')
-parser.add_argument('--mode', default='uniform', choices=modes, help='compression mode: '+' | '.join(modes)+' (default: uniform)')
 parser.add_argument('-g', '--groups', default=4, type=int)
 parser.add_argument('-r', '--compression-rate', default=2.0, type=float)
+parser.add_argument('--progressive', action='store_true', help='compression mode: '+' | '.join(modes)+' (default: uniform)')
 
 args = parser.parse_args()
 
-model = resnet50(pretrained=False, g=args.g, r=args.r) if args.arch == 'resnet50' else mobilenet_v2(pretrained=False, g=args.g, r=args.r)
-model.load_state_dict(torch.load(args.checkpoint))
+model = resnet50(pretrained=False, g=args.groups, r=args.compression_rate, progressive=args.progressive) if args.arch == 'resnet50' else \
+                 mobilenet_v2(pretrained=False, g=args.groups, r=args.compression_rate, progressive=args.progressive)
+
+checkpoint = torch.load(args.checkpoint)
+checkpoint = checkpoint['state_dict'] if 'state_dict' in checkpoint.keys() else checkpoint
+state_dict = model.state_dict()
+loaded_dict = {k: v for k, v in checkpoint.items() if k in state_dict}
+if not bool(loaded_dict): # empty dictionary if model was trained in parallel
+    loaded_dict = {k[7:]: v for k, v in checkpoint.items() if k[7:] in state_dict}
+state_dict.update(loaded_dict)
+model.load_state_dict(state_dict)
 model.cuda()
 model = nn.DataParallel(model)
 
 val_loader = torch.utils.data.DataLoader(
-    datasets.ImageFolder(os.path.join(args.data_path, "val"), transforms.Compose([
+    datasets.ImageFolder(os.path.join(args.data, "val"), transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
         transforms.ToTensor(),
