@@ -1,6 +1,6 @@
 # Tensor Reordering for CNN Compression
 
-This repository provides implementation of the paper [**Tensor Reordering for CNN COmpression**](https://arxiv.org/abs/2010.12110) in PyTorch.
+This repository provides implementation of the paper [**Tensor Reordering for CNN Compression**](https://arxiv.org/abs/2010.12110) in PyTorch.
 
 ![Compression Diagram](compression_diagram.png)
 
@@ -47,9 +47,13 @@ python test.py /path/to/imagenet/ checkpoint_name.pth -a mobilenet_v2 -g 4 -r 0.
 
 ## Finetuning Compressed Models
 
-Finetune the model with the suggested learning rate for one epoch:
+Finetune the ResNet model with the suggested learning rate for one epoch (assuming 1 GPU):
 ```
-python train.py /path/to/imagenet/ -a mobilenet_v2 -g 8 -r 1.0 --progressive --resume checkpoint_name.pth --batch-size 256 --lr 0.001 --epochs 1
+python train.py -a resnet50 -g 8 -r 4.0 --resume compressed-resnet50-uniform-8-4.0.pth --batch-size 64 --lr 0.00025 --epochs 1
+```
+And MobileNet-V2 as:
+```
+python train.py /path/to/imagenet/ -a mobilenet_v2 -g 8 -r 1.0 --progressive --resume checkpoint_name.pth --batch-size 64 --lr 0.0001 --epochs 1
 ```
 
 ## Requirements
