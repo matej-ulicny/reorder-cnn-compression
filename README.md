@@ -27,6 +27,10 @@ Compressed MobileNet-V2 accuracy on ImageNet validation set:
 | g=4, r'=2.0 | 1.5M | 0.4M | 70.94 | 89.89 |
 | g=4, r'=4.0 | 1.3M | 0.2M | 69.64 | 89.18 |
 
+## Presentation Video
+
+https://user-images.githubusercontent.com/7396993/121437578-df0c7880-c982-11eb-9618-12cbda153cf6.mp4
+
 ## Compressing Models
 
 Currectly ResNet-50 and MobileNet-V2 models from torchvision repository are supported. Mandatory parameters are architecture `-a`, parameter `-g` from the paper and coefficient compression rate `-r`. To compress ResNet-50 with `g=8` and 4-times coefficient compression rate run:
