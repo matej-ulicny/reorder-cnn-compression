@@ -72,12 +72,14 @@ The train and test scripts are based on the pytorch example code from https://gi
 
 ## Cite
 ```
-@misc{ulicny2020tensor,
-      title={Tensor Reordering for CNN Compression}, 
-      author={Matej Ulicny and Vladimir A. Krylov and Rozenn Dahyot},
-      year={2020},
-      eprint={2010.12110},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG}
+@inproceedings{ulicny2021tensor,
+  author={Ulicny, Matej and Krylov, Vladimir A. and Dahyot, Rozenn},
+  booktitle={ICASSP 2021 - 2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)}, 
+  title={Tensor Reordering for CNN Compression}, 
+  year={2021},
+  volume={},
+  number={},
+  pages={3930-3934},
+  doi={10.1109/ICASSP39728.2021.9413944}
 }
 ```
