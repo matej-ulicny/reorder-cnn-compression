@@ -83,3 +83,7 @@ The train and test scripts are based on the pytorch example code from https://gi
   doi={10.1109/ICASSP39728.2021.9413944}
 }
 ```
+
+## License
+
+This project is licensed under the BSD License - see the [LICENSE](LICENSE) file for details.
