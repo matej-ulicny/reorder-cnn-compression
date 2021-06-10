@@ -72,15 +72,19 @@ The train and test scripts are based on the pytorch example code from https://gi
 
 ## Cite
 ```
-@inproceedings{ulicny2021tensor,
-  author={Ulicny, Matej and Krylov, Vladimir A. and Dahyot, Rozenn},
-  booktitle={ICASSP 2021 - 2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)}, 
+@inproceedings{ulicny2020tensor,
   title={Tensor Reordering for CNN Compression}, 
-  year={2021},
-  volume={},
-  number={},
+  author={Matej Ulicny and Vladimir A. Krylov and Rozenn Dahyot},
+  booktitle={ICASSP 2021 - 2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)}, 
+  doi={10.1109/ICASSP39728.2021.9413944},
   pages={3930-3934},
-  doi={10.1109/ICASSP39728.2021.9413944}
+  note={Github: https://github.com/matej-ulicny/reorder-cnn-compression},
+  abstract={We show how parameter redundancy in Convolutional Neural Network (CNN) filters can be effectively reduced by pruning in spectral domain. Specifically, the representation extracted via Discrete Cosine Transform (DCT) is more conducive for pruning than the original space. By relying on a combination of weight tensor reshaping and reordering we achieve high levels of layer compression with just minor accuracy loss. Our approach is applied to compress pretrained CNNs and we show that minor additional fine-tuning allows our method to recover the original model performance after a significant parameter reduction. We validate our approach on ResNet-50 and MobileNet-V2 architectures for ImageNet classification task.},
+  url={https://arxiv.org/pdf/2010.12110.pdf},
+  year={2021},
+  eprint={2010.12110},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG}
 }
 ```
 
